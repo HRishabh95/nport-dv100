@@ -171,6 +171,59 @@ def fig_returns():
     save(fig, "fig6_returns")
 
 
+def fig_example(f, social=False):
+    """Two aggregate index funds with opposite-signed DV100, and a 50/50 $100m portfolio summed two ways."""
+    names = ["iShares Core U.S. Aggregate Bond ETF", "VANGUARD TOTAL BOND MARKET INDEX FUND"]
+    m = f[(f.QUARTER == "2025q4") & f.SERIES_NAME.isin(names)].set_index("SERIES_NAME").loc[names]
+    rep = 100 * m.NET / m.NAV
+    est = 100 * m.EST_NET / m.NAV
+    w = 50e6
+    face = (w * m.NET / m.NAV).sum() / 1e6
+    harm = (w * (-m.NET.iloc[0]) / m.NAV.iloc[0] + w * m.NET.iloc[1] / m.NAV.iloc[1]) / 1e6
+    fig, (a, b) = plt.subplots(1, 2, figsize=(10, 4.3) if social else (8.6, 3.5),
+                               gridspec_kw={"width_ratios": [1.25, 1]})
+    lab = ["iShares Core U.S.\nAggregate Bond ETF", "Vanguard Total Bond\nMarket Index Fund"]
+    y = np.array([1, 0])
+    a.barh(y + 0.18, rep.values, height=0.34, color=[POS, NEG], label="Reported DV100")
+    a.barh(y - 0.18, est.values, height=0.34, color=GREY, label="Estimated from holdings")
+    for yy, v in zip(y + 0.18, rep.values):
+        a.text(v + (0.3 if v > 0 else -0.3), yy, f"{v:+.1f}%".replace("-", "−"), va="center", ha="left" if v > 0 else "right", color=INK)
+    for yy, v in zip(y - 0.18, est.values):
+        a.text(v - 0.3, yy, f"{v:+.1f}%".replace("-", "−"), va="center", ha="right", color=MUTED)
+    a.axvline(0, color=INK, lw=0.8)
+    a.set_yticks(y)
+    a.set_yticklabels(lab)
+    a.set_xlim(-9.5, 9.5)
+    a.set_xlabel("DV100, % of net assets (2025Q4 filings)")
+    a.set_title("(a) Same kind of bonds, opposite reported signs", loc="left", fontsize=10.5, color=INK)
+    a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, fontsize=8.5)
+    a.grid(axis="y", visible=False)
+    v = [face, harm]
+    b.barh([1, 0], v, color=[POS, NEG], height=0.5)
+    b.text(face + 0.25, 1, f"+${face:.2f}m\nlooks rate-neutral", va="center", color=INK, fontsize=9.5)
+    b.text(harm / 2, 0, f"−${-harm:.2f}m", va="center", ha="center", color="white", fontsize=11, weight="bold")
+    b.axvline(0, color=INK, lw=0.8)
+    b.set_yticks([1, 0])
+    b.set_yticklabels(["Reported figures\nadded as filed", "Signs\nharmonised"])
+    b.set_xlim(-7, 2.5)
+    b.set_xlabel("Portfolio DV100, $m")
+    b.set_title("(b) $100m split 50/50", loc="left", fontsize=10.5, color=INK)
+    b.grid(axis="y", visible=False)
+    if social:
+        fig.suptitle("Two big bond index funds report the same kind of rate risk with opposite signs",
+                     x=0.01, ha="left", fontsize=13, weight="bold", color=INK)
+        fig.text(0.01, 0.01, "DV100: reported change in value for a 100bp change in rates (SEC Form N-PORT, 2025Q4 data set). "
+                 "\nPortfolio figures are DV100-based sensitivities to a +100bp parallel rise, not realised losses.\n"
+                 "Source: SEC Form N-PORT; author's calculations. Paper: Same Exposure, Opposite Signs (Upadhyay, 2026).",
+                 fontsize=7.5, color=MUTED, va="bottom")
+        fig.tight_layout(rect=(0, 0.1, 1, 0.92))
+        fig.savefig(D.parent / "fig_linkedin_example.png", dpi=220)
+        plt.close(fig)
+    else:
+        save(fig, "fig0_example")
+    return face, harm
+
+
 # ------------------------------------------------------------------ tables
 def fmt(x, d=1):
     return f"{x:,.{d}f}"
@@ -221,13 +274,15 @@ def tab_changes():
         lines.append((r.REGISTRANT_NAME, r.QUARTER, frm, r.CONVENTION, int(r.N_PLAIN_R + r.N_PLAIN_F)))
     df = pd.DataFrame(lines, columns=["name", "q", "frm", "to", "n"])
     out = [f"{n[:46].replace('&', chr(92) + '&')} & {q.upper()} & {a} $\\rightarrow$ {b} & {k} \\\\"
-           for n, q, a, b, k in df.head(14).itertuples(index=False)]
+           for n, q, a, b, k in df.head(10).itertuples(index=False)]
     (TAB / "changes.tex").write_text("\n".join(out) + "\n")
     return len(df), df.name.nunique()
 
 
 def main():
     f = fq()
+    fig_example(f)
+    fig_example(f, social=True)
     fig_scatter(f)
     byq, n = fig_quarters(f)
     fig_complexes(f)

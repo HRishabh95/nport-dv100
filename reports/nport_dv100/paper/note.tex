@@ -29,7 +29,7 @@
 \title{\textbf{Same Exposure, Opposite Signs:}\\[2pt]
 \Large Interest-Rate Risk Reporting Conventions in SEC Form N-PORT}
 \author{Rishabh Gyanendra Upadhyay\thanks{Inception42. E-mail: \href{mailto:uhrishabh@gmail.com}{uhrishabh@gmail.com}.
-Code: \url{https://github.com/HRishabh95/nport-dv100-sign-conventions}.
+Code:\\ \href{https://github.com/HRishabh95/nport-dv100-sign-conventions}{github.com/HRishabh95/nport-dv100-sign-conventions}.
 The views expressed are the author's own.}\\[2pt] \normalsize Inception42}
 \date{October 2026}
 
@@ -38,20 +38,22 @@ The views expressed are the author's own.}\\[2pt] \normalsize Inception42}
 \thispagestyle{empty}
 
 \begin{abstract}
-\noindent US registered funds report the interest-rate sensitivity of their portfolios to the SEC in
-Form N-PORT as DV100, ``the change in value of the portfolio resulting from a 100 basis point change
-in interest rates''. The form does not say whether rates rise or fall. Using every public N-PORT
-filing from 2019Q4 to 2026Q3, we show that funds holding the same kind of bonds report this number
-with opposite signs. Among 53,603 plain long-only bond fund-quarters, 48\% report a positive DV100
-and 52\% a negative one, a split that is stable in every quarter. The sign is a fund-complex choice:
-99.0\% of registrant-quarters with at least three plain funds are unanimous, and a fund's sign is
-predicted by its siblings with 99.8\% accuracy at 80.2\% coverage. Index funds tracking the broad US investment-grade bond market, including the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total
-Bond Market Index Fund, report DV100s of opposite sign. Summed at face value, 49.2\% of cross-complex
-fund pairs appear to hedge each other's rate risk, against 4.0\% once signs are harmonised. A
-separate re-implementation reproduces the census. In secondary return analyses, harmonising signs and
-units lowers the conditional prediction error of monthly fund returns by 9.7\%, against 0.9\% for
-the per-currency detail that a pending SEC proposal would aggregate away; the pre-registered test of
-currency detail is inconclusive. We provide code that builds fund-complex convention lookup tables, and suggest a one-sentence clarification to the form.
+\noindent The iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total Bond Market Index Fund hold
+similar US investment-grade bonds, yet in their SEC filings one reports its interest-rate sensitivity
+as positive and the other as negative. For a hypothetical \$100 million portfolio split equally
+between them, adding the reported figures suggests almost no net sensitivity ($+\$0.09$ million);
+harmonising the reporting conventions implies an estimated value change of about $-\$5.7$ million for
+a parallel 100 basis point rise in rates. The cause is Form N-PORT itself, which asks for DV100, ``the
+change in value of the portfolio resulting from a 100 basis point change in interest rates'', without
+saying whether rates rise or fall. Using every public N-PORT filing from 2019Q4 to 2026Q3, we show
+that 48\% of 53,603 plain long-only bond fund-quarters report a positive DV100 and 52\% a negative
+one, in every quarter. The choice is made by the fund complex: 99.0\% of registrant-quarters with at
+least three plain funds are unanimous, and a fund's sign is predicted by its siblings with 99.8\%
+accuracy at 80.2\% coverage. A separate re-implementation reproduces the census. Read as filed,
+49.2\% of cross-complex fund pairs show apparently offsetting rate exposures, against 4.0\% once signs
+are harmonised. Secondary return analyses point the same way, while a pre-registered test of the
+per-currency detail that a pending SEC proposal would remove is inconclusive. We provide code that
+builds fund-complex convention lookup tables, and propose a one-sentence clarification to the form.
 
 \medskip\noindent\textbf{Keywords:} Form N-PORT, DV100, interest-rate risk, regulatory reporting,
 data comparability, mutual funds, ETFs.\\
@@ -73,7 +75,20 @@ the filings for late 2025, the iShares Core U.S.\ Aggregate Bond ETF reports $+\
 Vanguard Total Bond Market Index Fund reports $-\$21.02$ billion. Both hold investment-grade US bonds
 with a duration near six years. One reports the gain from a fall in rates; the other reports the
 loss from a rise. Added together at face value, an equal-weighted position in the two funds appears
-almost perfectly hedged against rates. It is not: it loses about 5.7\% in a 100 basis point rise.
+almost insensitive to rates. Harmonised to one convention, its DV100 implies an estimated value change
+of about $-5.7\%$ for a parallel 100 basis point rise (Figure~\ref{fig:example}).
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig0_example.pdf}
+  \caption{\textbf{Same kind of bonds, opposite reported signs.} (a) Net DV100 reported in the 2025Q4
+  N-PORT data set by the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total Bond Market Index
+  Fund, and DV100 estimated from each fund's own holdings (value change for a +100bp rise), as \% of
+  net assets. (b) DV100 of a hypothetical \$100m portfolio split equally between the two funds, adding
+  the reported figures as filed and after harmonising signs to the ``rise'' convention. DV100-based
+  sensitivity estimates under a parallel shift, not realised losses.}
+  \label{fig:example}
+\end{figure}
 
 The cause is simple. The form defines DV100 as ``the change in value of the portfolio resulting from a
 100 basis point change in interest rates'' \citep{sec_nport} without saying whether rates rise or
@@ -187,7 +202,7 @@ in both clouds; only the sign differs.
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.72\linewidth]{fig1_scatter.pdf}
+  \includegraphics[width=0.6\linewidth]{fig1_scatter.pdf}
   \caption{\textbf{Two conventions for the same exposure.} Reported DV100 against the DV100 estimated
   from each fund's own holdings, both as \% of net assets, for 51,201 plain long-only bond
   fund-quarters, 2019Q4 to 2026Q3 (values clipped at $\pm$20\%). Every fund here loses value when rates
@@ -216,8 +231,7 @@ Fund & Report date & NAV & \multicolumn{2}{c}{DV100 (\$bn)} & Reported & Conv. \
 \begin{tablenotes}\footnotesize
 \item Reported: net Item B.3.b DV100 summed over currencies and buckets, as filed. Holdings estimate:
 value change for a +100bp rise from the fund's own holdings. Illustration: a \$100m portfolio split
-equally between the iShares and Vanguard funds has a face-value DV100 of $+\$0.09$m (apparently
-hedged); with signs harmonised to convention R it is $-\$5.72$m.
+equally between the iShares and Vanguard funds has a face-value DV100 of $+\$0.09$m (apparently rate-neutral); with signs harmonised to convention R it is $-\$5.72$m.
 \end{tablenotes}
 \end{threeparttable}
 \end{table}
@@ -230,8 +244,7 @@ sibling, with DV01 and DV100 signs that disagree within the same filing, or with
 problems are left unresolved rather than assigned a sign. Local-currency reporting is detected where
 the ratio of a non-USD leg to its holdings estimate matches the exchange rate (493 legs, mostly JPY)
 and converted. The full rule set was frozen before the audit was run; one labelled deviation (D1),
-made afterwards, keeps as convention R the 12,703 records whose DV100 exceeds 100 times DV01 because
-of the negative convexity of callable municipal bonds.
+made afterwards, keeps as convention R the 12,703 records whose DV100 exceeds 100 times DV01, reflecting callable municipal bonds' negative convexity.
 
 %=====================================================================
 \section{How common is each convention?}\label{sec:prevalence}
@@ -243,7 +256,7 @@ report positive.
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.82\linewidth]{fig2_quarters.pdf}
+  \includegraphics[width=0.72\linewidth]{fig2_quarters.pdf}
   \caption{\textbf{About half of plain bond funds report a positive DV100, every quarter.} Share of plain
   long-only bond fund-quarters reporting positive (orange) and negative (blue) net DV100, by N-PORT
   data set. Dotted line: 50\%.}
@@ -260,7 +273,7 @@ fund-quarters (80.2\%).
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.78\linewidth]{fig3_complexes.pdf}
+  \includegraphics[width=0.66\linewidth]{fig3_complexes.pdf}
   \caption{\textbf{Within a fund complex, almost everyone agrees.} Share of each registrant's plain
   fund-quarters reporting a positive DV100, for the 25 registrants with the most plain fund-quarters
   (marker area proportional to fund-quarters).}
@@ -298,7 +311,7 @@ wrong for some quarters; the convention has to be read by quarter.
 
 \begin{table}[!htb]
 \centering\small
-\caption{Registrants that changed convention (first 14 of 31 changes, by quarter)}\label{tab:changes}
+\caption{Registrants that changed convention (first 10 of 31 changes, by quarter)}\label{tab:changes}
 \begin{tabular}{lccr}
 \toprule
 Registrant & Data set & Change & Plain funds \\
@@ -322,7 +335,7 @@ funds most affected by the proposal, only 20\% of net assets is comparable as fi
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.8\linewidth]{fig4_status.pdf}
+  \includegraphics[width=0.74\linewidth]{fig4_status.pdf}
   \caption{\textbf{How much of N-PORT DV100 is comparable as filed.} Status of each fund-quarter after
   the audit (with deviation D1), by count and by net assets, for all 105,416 fund-quarters and for the
   2,566 multi-currency offset fund-quarters (cross-currency offset at least 0.20, non-USD share at least
@@ -372,7 +385,7 @@ placeholder adviser identifier, as unresolved leaves every reported figure uncha
 The most direct consequence is for anyone who sums, nets or ranks DV100 across funds from different
 complexes. Figure~\ref{fig:pairs}(a) takes every pair of resolved fund-quarters from different
 registrants in the same quarter. As filed, 49.2\% of the 97 million pairs have net DV100s of
-opposite sign, so one fund appears to hedge the other's rate risk. After harmonising signs, 4.0\% do; these are genuine offsets, such as a fund with net short duration paired with a conventional bond fund. Under deviation D1,
+opposite sign: read as filed, their rate exposures appear to offset in direction, although with different magnitudes they need not be close to a hedge. After harmonising signs, 4.0\% do; these are genuine directional offsets, such as a fund with net short duration paired with a conventional bond fund. Under deviation D1,
 which resolves more records, the figures are 50.2\% and 3.4\% of 133 million pairs.
 
 \begin{figure}[!htb]
@@ -451,7 +464,7 @@ information for most records, whereas currency detail removed by aggregation can
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.8\linewidth]{fig6_returns.pdf}
+  \includegraphics[width=0.72\linewidth]{fig6_returns.pdf}
   \caption{\textbf{Secondary analysis: harmonisation vs.\ currency detail.} Reduction in the conditional
   prediction error (MSE) of monthly fund returns, broad population (10,988 fund-months, 343 funds with
   at least 10\% non-USD debt, confirmation sample), with 95\% intervals. $^\dagger$Interval computed
@@ -491,7 +504,7 @@ change, the IG/non-IG merge or the removal of DV01, and does not measure investo
 A single number in a mandatory SEC filing means opposite things depending on who files it. About half
 of plain bond funds report the interest-rate sensitivity of their portfolios as positive and half as
 negative, and the choice is made consistently at the level of the fund complex. Taken at face value,
-these figures make about half of all cross-complex fund pairs look like rate hedges for one another.
+these figures make about half of all cross-complex fund pairs look like offsetting rate exposures.
 The problem is easy to fix for future filings with one sentence in the form instructions, and for
 past filings with the lookup tables that the accompanying code builds.
 
@@ -508,9 +521,11 @@ figures.
 
 \section*{Use of generative AI}
 Anthropic's Claude Opus 5.5 models were used to develop the analysis code; extract and analyse the
-public SEC data; and generate the figures. The author selected the research question, approved the
-research protocols and their amendments, reviewed the evidence and conclusions, directed revisions,
-and accepts responsibility for the final manuscript.
+public SEC data; generate the figures; draft the manuscript text; and run, as separate model
+instances, the independent re-implementation of the census and an overclaiming review of the
+manuscript. The author selected the research question, approved the research protocols and their
+amendments, reviewed the evidence and conclusions, directed revisions, and accepts responsibility for
+the final manuscript.
 
 \begin{thebibliography}{99}\small\setlength{\itemsep}{2pt}
 \bibitem[{Barth et al.}(2024)]{barth2024} Barth, D., R.\,J. Kahn, P. Monin, and O. Sokolinskiy (2024). Reaching for Duration and Leverage in the Treasury Market. Finance and Economics Discussion Series 2024-039, Board of Governors of the Federal Reserve System. \doi{10.17016/FEDS.2024.039}
