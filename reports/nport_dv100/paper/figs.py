@@ -131,7 +131,7 @@ def fig_example(f, social=False):
     ax.grid(axis="y", visible=False)
     ax.set_xticks(np.arange(-6, 4, 1))
     ax.set_xticklabels([("\u2212" if t < 0 else "") + f"{abs(t)}" for t in range(-6, 4)], fontsize=8.5 * k)
-    ax.set_xlabel("Change in portfolio value for a parallel +100bp rise in rates ($ million)", fontsize=9 * k)
+    ax.set_xlabel("Signed DV100 contribution ($ million)", fontsize=9 * k)
     if social:
         fig.text(0.03, 0.93, "Similar bonds, opposite signs: a $100m portfolio split 50/50", fontsize=24, weight="bold")
         fig.text(0.03, 0.865, "Two of the largest US bond index funds report their rate sensitivity (DV100) to the SEC "
@@ -183,25 +183,20 @@ def fig_quarters(f):
     p = plain(f)
     byq = p.groupby("QUARTER").PCLASS.apply(lambda s: (s == "F").mean() * 100)
     allf = 100 * (p.PCLASS == "F").mean()
-    fig, a = plt.subplots(figsize=(W, 2.3))
+    fig, a = plt.subplots(figsize=(W, 2.2))
     x = np.arange(len(byq))
-    edges = np.arange(len(byq) + 1) - 0.5
-    a.stairs(np.full(len(byq), 100.0), edges, fill=True, color=R_COL, alpha=0.9, lw=0)
-    a.stairs(byq.values, edges, fill=True, color=F_COL, alpha=0.95, lw=0)
-    a.axhline(50, color="white", lw=0.8, ls=(0, (3, 2)))
-    a.text(x[-1] + 0.7, (byq.values[-1]) / 2, "Positive (F)", color=F_COL, va="center", fontsize=9, weight="bold")
-    a.text(x[-1] + 0.7, (100 + byq.values[-1]) / 2, "Negative (R)", color=R_COL, va="center", fontsize=9,
-           weight="bold")
-    a.text(0.3, 4, f"Positive share: {byq.min():.0f}% to {byq.max():.0f}% each quarter; {allf:.0f}% overall",
-           color="white", fontsize=8.5, va="bottom")
-    a.set_xlim(-0.5, len(x) - 0.5)
-    a.set_ylim(0, 100)
-    a.set_yticks([0, 25, 50, 75, 100])
+    a.axhline(50, color=MUTED, lw=0.8, ls=(0, (3, 2)))
+    a.plot(x, byq.values, color=F_COL, lw=1.8, marker="o", ms=3.2, zorder=3)
+    a.text(0, 58.5, f"Reporting positive (F): {byq.min():.0f}% to {byq.max():.0f}% each quarter, {allf:.0f}% overall",
+           fontsize=8.5, color=F_COL)
+    a.set_xlim(-0.6, len(x) - 0.4)
+    a.set_ylim(30, 62)
+    a.set_yticks([30, 40, 50, 60])
+    a.set_yticklabels(["30%", "40%", "50%", "60%"])
     a.set_xticks(x[::4])
     a.set_xticklabels([q.upper() for q in byq.index[::4]])
-    a.set_ylabel("% of plain fund-quarters")
-    a.grid(False)
-    fig.subplots_adjust(left=0.09, right=0.83, top=0.97, bottom=0.14)
+    a.grid(axis="x", visible=False)
+    fig.subplots_adjust(left=0.08, right=0.95, top=0.97, bottom=0.14)
     save(fig, "fig2_quarters")
     return byq
 
@@ -293,6 +288,11 @@ def fig_pairs():
 
 
 # ------------------------------------------------------------------ Figure 7: returns
+def ci_fmt(x):
+    """Same precision as Table 6: two decimals below 1, otherwise one."""
+    return f"{x:.2f}" if abs(x) < 1 else f"{x:.1f}"
+
+
 def fig_returns():
     ci = json.loads((NRV / "outcome/posthoc_rawcost_ci_conf.json").read_text())["broad"]["B"]
     mse = json.loads((NRV / "outcome/posthoc_mse_conf.json").read_text())["broad"]
@@ -304,7 +304,7 @@ def fig_returns():
     for yy, (lab, v, (lo, hi), c) in zip([1, 0], rows):
         a.barh(yy, v, color=c, height=0.5, lw=0)
         a.errorbar(v, yy, xerr=[[v - lo], [hi - v]], fmt="none", ecolor=INK, capsize=3, lw=0.9)
-        a.text(hi + 0.35, yy, f"{v:.1f}%  [{lo:.1f}, {hi:.1f}]", va="center", fontsize=9)
+        a.text(hi + 0.35, yy, f"{v:.1f}%  [{ci_fmt(lo)}, {ci_fmt(hi)}]", va="center", fontsize=9)
     a.set_yticks([1, 0])
     a.set_yticklabels([r[0] for r in rows])
     a.set_xlim(0, 18)

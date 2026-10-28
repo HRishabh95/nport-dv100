@@ -53,8 +53,7 @@ one, in every quarter. The choice is made by the fund complex: 99.0\% of registr
 least three plain funds are unanimous, and a fund's sign is predicted by its siblings with 99.8\%
 accuracy at 80.2\% coverage. A separate re-implementation reproduces the census. Read as filed,
 49.2\% of cross-complex fund pairs show apparently offsetting rate exposures, against 4.0\% once signs
-are harmonised. Secondary return analyses point the same way, while a pre-registered test of the
-per-currency detail that a pending SEC proposal would remove is inconclusive. We provide code that
+are harmonised. In a secondary analysis, harmonising signs and units together lowers the conditional prediction error of monthly fund returns; a pre-registered test of the per-currency detail that a pending SEC proposal would remove is inconclusive. We provide code that
 builds fund-complex convention lookup tables, and propose a one-sentence clarification to the form.
 
 \medskip\noindent\textbf{Keywords:} Form N-PORT, DV100, interest-rate risk, regulatory reporting,
@@ -87,8 +86,7 @@ of about $-5.7\%$ for a parallel 100 basis point rise (Figure~\ref{fig:example})
   equally between the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total Bond Market Index Fund.
   Each segment is one fund's contribution to portfolio DV100, from the net DV100 each fund reported in the
   2025Q4 N-PORT data set (report dates August and September 2025). As filed, the two reported figures nearly
-  cancel; on one convention (R, value change for a rise) both are negative. DV100-based sensitivity estimates
-  for a parallel +100bp rise, not realised losses.}
+  cancel, but they rest on different shock conventions and are not a common measure. Only the harmonised row, with both funds on convention R (value change for a rise), estimates the portfolio's sensitivity to a common parallel +100bp rise. Colours show the sign of each contribution (orange positive, blue negative), not the fund. DV100-based sensitivity estimates, not realised losses.}
   \label{fig:example}
 \end{figure}
 
@@ -260,8 +258,8 @@ report positive.
   \centering
   \includegraphics{fig2_quarters.pdf}
   \caption{\textbf{About half of plain bond funds report a positive DV100, every quarter.} Share of plain
-  long-only bond fund-quarters reporting positive (orange) and negative (blue) net DV100, by N-PORT
-  data set. Dotted line: 50\%.}
+  long-only bond fund-quarters reporting a positive net DV100 (convention F) in each N-PORT data set,
+  2019Q4 to 2026Q3; the remainder report negative (convention R). Dashed line: 50\%.}
   \label{fig:quarters}
 \end{figure}
 
