@@ -4,3 +4,4 @@ scipy>=1.13
 pyarrow>=17
 matplotlib>=3.8
 openpyxl
+fonttools>=4.40

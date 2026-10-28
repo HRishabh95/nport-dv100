@@ -23,6 +23,8 @@
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
 \setlist{itemsep=2pt,topsep=4pt}
 \graphicspath{{figs/}}
+\renewcommand{\topfraction}{0.85}\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.12}\renewcommand{\floatpagefraction}{0.75}
 \newcommand{\confirm}[1]{\textcolor{red}{[#1]}}
 \makeatletter\newcommand{\tabinput}[1]{\@@input #1 }\makeatother
 
@@ -80,13 +82,13 @@ of about $-5.7\%$ for a parallel 100 basis point rise (Figure~\ref{fig:example})
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.95\linewidth]{fig0_example.pdf}
-  \caption{\textbf{Same kind of bonds, opposite reported signs.} (a) Net DV100 reported in the 2025Q4
-  N-PORT data set by the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total Bond Market Index
-  Fund, and DV100 estimated from each fund's own holdings (value change for a +100bp rise), as \% of
-  net assets. (b) DV100 of a hypothetical \$100m portfolio split equally between the two funds, adding
-  the reported figures as filed and after harmonising signs to the ``rise'' convention. DV100-based
-  sensitivity estimates under a parallel shift, not realised losses.}
+  \includegraphics{fig0_example.pdf}
+  \caption{\textbf{Same kind of bonds, opposite reported signs.} A hypothetical \$100m portfolio split
+  equally between the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total Bond Market Index Fund.
+  Each segment is one fund's contribution to portfolio DV100, from the net DV100 each fund reported in the
+  2025Q4 N-PORT data set (report dates August and September 2025). As filed, the two reported figures nearly
+  cancel; on one convention (R, value change for a rise) both are negative. DV100-based sensitivity estimates
+  for a parallel +100bp rise, not realised losses.}
   \label{fig:example}
 \end{figure}
 
@@ -202,7 +204,7 @@ in both clouds; only the sign differs.
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.6\linewidth]{fig1_scatter.pdf}
+  \includegraphics{fig1_scatter.pdf}
   \caption{\textbf{Two conventions for the same exposure.} Reported DV100 against the DV100 estimated
   from each fund's own holdings, both as \% of net assets, for 51,201 plain long-only bond
   fund-quarters, 2019Q4 to 2026Q3 (values clipped at $\pm$20\%). Every fund here loses value when rates
@@ -256,15 +258,14 @@ report positive.
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.72\linewidth]{fig2_quarters.pdf}
+  \includegraphics{fig2_quarters.pdf}
   \caption{\textbf{About half of plain bond funds report a positive DV100, every quarter.} Share of plain
   long-only bond fund-quarters reporting positive (orange) and negative (blue) net DV100, by N-PORT
   data set. Dotted line: 50\%.}
   \label{fig:quarters}
 \end{figure}
 
-The convention follows the fund complex. Figure~\ref{fig:complexes} plots, for the 25 registrants
-with the most plain fund-quarters, the share of their plain fund-quarters reporting positive. Almost
+The convention follows the fund complex. Figure~\ref{fig:complexes} plots, for the largest registrants of each convention, the share of their plain fund-quarters reporting positive. Almost
 every registrant sits at 0\% or 100\%. iShares, Fidelity, Northern, DoubleLine and PIMCO report
 positive; DFA, SPDR, Invesco, Franklin and Eaton Vance report negative. Across all registrant-quarters
 with at least three plain funds, 99.0\% are unanimous, and a plain fund's convention is predicted by
@@ -273,15 +274,26 @@ fund-quarters (80.2\%).
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.66\linewidth]{fig3_complexes.pdf}
+  \includegraphics{fig3_complexes.pdf}
   \caption{\textbf{Within a fund complex, almost everyone agrees.} Share of each registrant's plain
-  fund-quarters reporting a positive DV100, for the 25 registrants with the most plain fund-quarters
-  (marker area proportional to fund-quarters).}
+  fund-quarters reporting a positive (orange) or negative (blue) DV100, for the eight registrants with the
+  most plain fund-quarters in each convention; plain fund-quarters at right. Allspring changed convention in
+  2023Q1. Table~\ref{tab:complexes} and the lookup tables give the full evidence.}
   \label{fig:complexes}
 \end{figure}
 
 Table~\ref{tab:complexes} lists the largest registrants with their dominant convention and how
 consistently they apply it.
+
+\begin{figure}[!tb]
+  \centering
+  \includegraphics{fig4_status.pdf}
+  \caption{\textbf{How much of N-PORT DV100 is comparable as filed.} Status of each fund-quarter after
+  the audit (with deviation D1), by count and by net assets, for all 105,416 fund-quarters and for the
+  2,566 multi-currency offset fund-quarters (cross-currency offset at least 0.20, non-USD share at least
+  0.10). Unresolved records are never assigned a sign.}
+  \label{fig:status}
+\end{figure}
 
 \begin{table}[!htb]
 \centering\small
@@ -333,15 +345,6 @@ dollars), 40\% become comparable after a supported sign flip or unit conversion,
 net assets) remain unresolved. For multi-currency funds whose currency legs offset one another, the
 funds most affected by the proposal, only 20\% of net assets is comparable as filed; 65\% becomes comparable after a sign flip or unit conversion, and 14\% remains unresolved.
 
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[width=0.74\linewidth]{fig4_status.pdf}
-  \caption{\textbf{How much of N-PORT DV100 is comparable as filed.} Status of each fund-quarter after
-  the audit (with deviation D1), by count and by net assets, for all 105,416 fund-quarters and for the
-  2,566 multi-currency offset fund-quarters (cross-currency offset at least 0.20, non-USD share at least
-  0.10). Unresolved records are never assigned a sign.}
-  \label{fig:status}
-\end{figure}
 
 %=====================================================================
 \section{Validation}\label{sec:validation}
@@ -390,7 +393,7 @@ which resolves more records, the figures are 50.2\% and 3.4\% of 133 million pai
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.92\linewidth]{fig5_pairs.pdf}
+  \includegraphics{fig5_pairs.pdf}
   \caption{\textbf{Harmonisation changes cross-fund comparisons.} (a) Share of cross-complex pairs of
   resolved fund-quarters whose net DV100s have opposite signs, as filed and with signs harmonised
   (frozen audit rule; unweighted; units not converted). (b) Share of 23,566 cross-family pairs of
@@ -464,7 +467,7 @@ information for most records, whereas currency detail removed by aggregation can
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.72\linewidth]{fig6_returns.pdf}
+  \includegraphics{fig6_returns.pdf}
   \caption{\textbf{Secondary analysis: harmonisation vs.\ currency detail.} Reduction in the conditional
   prediction error (MSE) of monthly fund returns, broad population (10,988 fund-months, 343 funds with
   at least 10\% non-USD debt, confirmation sample), with 95\% intervals. $^\dagger$Interval computed
