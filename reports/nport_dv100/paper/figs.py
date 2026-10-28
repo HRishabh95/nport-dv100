@@ -320,6 +320,11 @@ def fmt(x, d=1):
     return f"{x:,.{d}f}"
 
 
+def tex_num(x, spec):
+    """Signed number with a true minus sign in LaTeX."""
+    return format(x, spec).replace("-", "$-$")
+
+
 def tab_example(f):
     names = ["iShares Core U.S. Aggregate Bond ETF", "Fidelity U.S. Bond Index Fund", "Schwab U.S. Aggregate Bond ETF",
              "VANGUARD TOTAL BOND MARKET INDEX FUND", "SPDR Portfolio Aggregate Bond ETF"]
@@ -329,7 +334,8 @@ def tab_example(f):
     for n, r in m.iterrows():
         rep, est = r.NET / 1e9, r.EST_NET / 1e9
         lines.append(f"{pretty.get(n, n)} & {pd.to_datetime(r.REPORT_DATE).strftime('%b %Y')} & {fmt(r.NAV / 1e9)} & "
-                     f"{rep:+,.2f} & {est:+,.2f} & {100 * r.NET / r.NAV:+.1f} & {r.PCLASS} \\\\")
+                     f"{tex_num(rep, '+,.2f')} & {tex_num(est, '+,.2f')} & {tex_num(100 * r.NET / r.NAV, '+.1f')} & "
+                     f"{r.PCLASS} \\\\")
     (TAB / "example.tex").write_text("\n".join(lines) + "\n")
     ag, vg = m.loc[names[0]], m.loc[names[3]]
     # illustrative 50/50 portfolio of $100m: face-value sum vs harmonised
