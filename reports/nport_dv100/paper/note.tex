@@ -1,0 +1,561 @@
+% Same Exposure, Opposite Signs -- SSRN working paper.
+% Build: ./build.sh   (figures/tables from figs.py; Tectonic in conda env "tectonic")
+% Numbers mirror ../DRAFT.md and the frozen outputs reconciled in ../NUMBERS_AUDIT.md.
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=1.05in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{newpxtext,newpxmath}
+\usepackage{microtype}
+\usepackage{setspace}\setstretch{1.12}
+\usepackage{graphicx}
+\usepackage{booktabs,tabularx,threeparttable}
+\usepackage{float}
+\usepackage[section]{placeins}
+\usepackage{enumitem}
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+\usepackage{xcolor}
+\usepackage[round,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{xurl}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\setlist{itemsep=2pt,topsep=4pt}
+\graphicspath{{figs/}}
+\newcommand{\confirm}[1]{\textcolor{red}{[#1]}}
+\makeatletter\newcommand{\tabinput}[1]{\@@input #1 }\makeatother
+
+\title{\textbf{Same Exposure, Opposite Signs:}\\[2pt]
+\Large Interest-Rate Risk Reporting Conventions in SEC Form N-PORT}
+\author{Rishabh Gyanendra Upadhyay\thanks{Inception42. E-mail: \href{mailto:uhrishabh@gmail.com}{uhrishabh@gmail.com}.
+Code: \url{https://github.com/HRishabh95/nport-dv100-sign-conventions}.
+The views expressed are the author's own.}\\[2pt] \normalsize Inception42}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent US registered funds report the interest-rate sensitivity of their portfolios to the SEC in
+Form N-PORT as DV100, ``the change in value of the portfolio resulting from a 100 basis point change
+in interest rates''. The form does not say whether rates rise or fall. Using every public N-PORT
+filing from 2019Q4 to 2026Q3, we show that funds holding the same kind of bonds report this number
+with opposite signs. Among 53,603 plain long-only bond fund-quarters, 48\% report a positive DV100
+and 52\% a negative one, a split that is stable in every quarter. The sign is a fund-complex choice:
+99.0\% of registrant-quarters with at least three plain funds are unanimous, and a fund's sign is
+predicted by its siblings with 99.8\% accuracy at 80.2\% coverage. Index funds tracking the broad US investment-grade bond market, including the iShares Core U.S.\ Aggregate Bond ETF and the Vanguard Total
+Bond Market Index Fund, report DV100s of opposite sign. Summed at face value, 49.2\% of cross-complex
+fund pairs appear to hedge each other's rate risk, against 4.0\% once signs are harmonised. A
+separate re-implementation reproduces the census. In secondary return analyses, harmonising signs and
+units lowers the conditional prediction error of monthly fund returns by 9.7\%, against 0.9\% for
+the per-currency detail that a pending SEC proposal would aggregate away; the pre-registered test of
+currency detail is inconclusive. We provide code that builds fund-complex convention lookup tables, and suggest a one-sentence clarification to the form.
+
+\medskip\noindent\textbf{Keywords:} Form N-PORT, DV100, interest-rate risk, regulatory reporting,
+data comparability, mutual funds, ETFs.\\
+\textbf{JEL classification:} G23, G28, G11.
+
+\end{abstract}
+
+\newpage
+\setcounter{page}{1}
+
+%=====================================================================
+\section{Introduction}
+
+Suppose a risk team holds two of the largest bond index funds in the United States, each tracking the
+US investment-grade aggregate market, and wants to know the portfolio's exposure to a rise in rates.
+Each fund reports the answer to the SEC every quarter: Item B.3 of Form N-PORT asks for DV100, the
+change in portfolio value for a 100 basis point move in rates, by currency and maturity bucket. In
+the filings for late 2025, the iShares Core U.S.\ Aggregate Bond ETF reports $+\$7.58$ billion and the
+Vanguard Total Bond Market Index Fund reports $-\$21.02$ billion. Both hold investment-grade US bonds
+with a duration near six years. One reports the gain from a fall in rates; the other reports the
+loss from a rise. Added together at face value, an equal-weighted position in the two funds appears
+almost perfectly hedged against rates. It is not: it loses about 5.7\% in a 100 basis point rise.
+
+The cause is simple. The form defines DV100 as ``the change in value of the portfolio resulting from a
+100 basis point change in interest rates'' \citep{sec_nport} without saying whether rates rise or
+fall, and fund complexes have settled on different answers. This paper measures how widespread the
+difference is, shows that it is a stable choice made by fund complexes rather than by individual
+funds, and quantifies how much it changes mechanical comparisons of rate exposure across funds.
+
+The question is timely. In February 2026 the SEC proposed amendments to Form N-PORT that would keep
+DV100, require it in US dollars, and aggregate it across currencies \citep{sec_proposal}. Commenters
+discussed the currency aggregation and the USD requirement; none of the 15 public comment letters
+raised the direction of the shock \citep{sec_comments}. The industry's main trade association
+supported the USD requirement precisely because it would ``facilitate comparisons across funds''
+\citep{ici_letter}. Our evidence suggests that comparability also needs the direction stated.
+
+We make four contributions. First, a full census: across 28 quarters and 105,416 fund-quarters, we
+classify each filer's sign convention using only the filings themselves and contemporaneous
+holdings, never returns, under a protocol frozen before the data were examined. Second, independent
+validation: the inferred conventions agree with each fund's own holdings on 99.7\% of exposure, a
+separate re-implementation reproduces the census, and the SEC bulk data match the original XML
+filings cell for cell. Third, consequences: we show how harmonisation changes cross-fund comparisons
+and, as secondary evidence, how it changes the explanation of subsequent fund returns. Fourth, a data
+product: code that builds fund-complex and adviser lookup tables, which let users establish a filer's convention for any
+quarter, together with a one-sentence clarification of the form.
+
+\paragraph{Related literature.} This paper relates to three literatures. The first studies the
+quality and comparability of mandatory regulatory data. Research on XBRL filings documents frequent
+errors and inconsistencies in machine-readable disclosures \citep{debreceny2010,du2013}, and the
+classic comparison of mutual fund databases shows that measurement choices in fund data can change
+research conclusions \citep{elton2001}. Closest to our setting, \citet{flood2015} show that loosely specified risk fields in Form PF allow funds with different risks to report similar numbers. We document a different problem: a definitional ambiguity
+that makes two correct filings incomparable. The second literature measures the interest-rate and
+credit risk that bond funds take, and the fragility it creates \citep{becker2015,choi2018,goldstein2017,falato2021,ma2022};
+this work relies on holdings-based or returns-based exposure measures \citep{barth2024}, and staff work that does use the N-PORT risk metrics adopts one reading of the sign: \citet{iorio2024} define DV01 as the value change for a one basis point \emph{decrease} in rates. Other recent work uses N-PORT holdings and derivatives \citep{kaniel2025}. Our results caution
+against using the reported N-PORT risk metrics across complexes without harmonisation. The third
+studies how funds use derivatives \citep{koski1999}; the funds whose rate exposure cannot be read
+from holdings are exactly those where the reported metrics matter most. Methodologically, we follow
+the recommendation to pre-register tests and report all outcomes \citep{harvey2017}, and we use
+cluster bootstraps \citep{cameron2008} and an encompassing-style calibration test
+\citep{chong1986,harvey1998}.
+
+%=====================================================================
+\section{Institutional background}\label{sec:background}
+
+Form N-PORT, adopted in 2016 as part of the SEC's investment company reporting modernization
+\citep{sec_2016}, requires registered funds other than money market funds to report portfolio
+holdings and risk metrics monthly; the report for the third month of each fiscal quarter becomes
+public. Funds that hold debt above a threshold (25\% of net assets) report portfolio-level risk
+metrics in Item B.3: DV01 and DV100 for interest rates and CS01 for credit spreads, each by currency
+and across five maturity buckets (3 months, 1, 5, 10 and 30 years), in the spirit of key-rate durations \citep{ho1992,tuckman2022}.
+
+The instruction for Item B.3.b reads: ``provide the change in value of the portfolio resulting from a
+100 basis point change in interest rates'' \citep{sec_nport}. Several other monetary items on the form
+say ``Report in U.S.\ dollars''; Item B.3 says neither that nor which direction the shock goes, and
+the adopting release adds neither. Two conventions are therefore consistent with the text:
+\begin{itemize}
+  \item \textbf{R (rise):} report the value change for a rise in rates, so a long bond fund reports a
+  negative number.
+  \item \textbf{F (fall or magnitude):} report a positive number for a long bond fund, either the value
+  change for a fall in rates or an unsigned sensitivity.
+\end{itemize}
+
+The 2026 proposal would require risk metrics in US dollars, report DV100 aggregated across currencies,
+drop DV01, merge investment-grade and non-investment-grade spread risk, and raise the reporting
+threshold to 50\% of net assets in debt \citep{sec_proposal}. One comment letter argued that full
+currency aggregation ``obscures localized, currency-specific convexity risks'' \citep{sharma_letter}.
+No letter addressed the direction of the shock.
+
+%=====================================================================
+\section{Data}\label{sec:data}
+
+We use the SEC's quarterly Form N-PORT public data sets from 2019Q4 to 2026Q3 \citep{sec_nportdata}, which contain reports for period-ends from September 2019 to July 2026 (quarters in this paper refer to these SEC data sets),
+keeping the latest public report per fund (series) per data set. Table~\ref{tab:sample} summarises
+the sample. Investment advisers come from Form N-CEN \citep{sec_ncen}. For the return analysis in
+Section~\ref{sec:returns} we add monthly fund returns from N-PORT, official government yield curves
+for six currencies, ECB reference exchange rates and factor ETF prices \citep{rates}.
+
+\begin{table}[!htb]
+\centering\small
+\caption{Sample}\label{tab:sample}
+\begin{tabular}{lr}
+\toprule
+N-PORT data sets (quarters) & 28 (2019Q4 to 2026Q3) \\
+Fund-quarters reporting Item B.3 interest-rate fields & 105,416 \\
+Distinct funds (series) & 6,073 \\
+Distinct registrants & 1,531 \\
+Distinct primary investment advisers (numeric CRD) & 509 \\
+Plain long-only bond fund-quarters (definition in Section~\ref{sec:method}) & 53,603 \\
+\quad of which used as convention evidence & 51,201 \\
+Fund-quarters with a resolved convention & 86,276 (81.8\%) \\
+Multi-currency offset fund-quarters (Section~\ref{sec:prevalence}) & 2,566 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%=====================================================================
+\section{Identifying the convention without returns}\label{sec:method}
+
+The sign of a fund's DV100 is only informative if we know the true direction of its exposure. For
+most funds we do not; for one large group we do. A \emph{plain} fund is a long-only bond fund: debt
+is at least 50\% of net assets, rate derivatives are below 5\% of debt, short debt is below 1\%, and
+an estimate of DV100 built from the fund's own holdings (each bond's duration from its coupon,
+maturity and yield) is negative and at least 0.5\% of net assets. A 100 basis point rise in rates
+certainly lowers the value of such a fund, so a negative reported DV100 reveals convention R and a
+positive one convention F. Plain fund-quarters whose reported magnitude is outside one-third to three
+times the holdings estimate (4.5\%) are not used as evidence.
+
+Figure~\ref{fig:scatter} shows the result for all 51,201 evidence fund-quarters. If filers shared a
+convention, reported DV100 would cluster along a single line through the holdings estimates. Instead
+there are two mirror-image clouds: one along ``reported = estimate'' (convention R) and one along
+``reported = $-$estimate'' (convention F). The magnitudes agree closely with the holdings estimates
+in both clouds; only the sign differs.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.72\linewidth]{fig1_scatter.pdf}
+  \caption{\textbf{Two conventions for the same exposure.} Reported DV100 against the DV100 estimated
+  from each fund's own holdings, both as \% of net assets, for 51,201 plain long-only bond
+  fund-quarters, 2019Q4 to 2026Q3 (values clipped at $\pm$20\%). Every fund here loses value when rates
+  rise (horizontal axis negative). Blue: reported negative (convention R); orange: reported positive
+  (convention F). Dashed lines: reported = estimate and reported = $-$estimate.}
+  \label{fig:scatter}
+\end{figure}
+
+Table~\ref{tab:example} makes this concrete with five index funds that track the same broad US
+investment-grade bond market. All five have holdings-implied DV100 of about $-6\%$ of net assets.
+Three report it as positive, two as negative.
+
+\begin{table}[!htb]
+\centering\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{threeparttable}
+\caption{Worked example: aggregate bond index funds, 2025Q4 data set}\label{tab:example}
+\begin{tabular}{lcrrrrc}
+\toprule
+Fund & Report date & NAV & \multicolumn{2}{c}{DV100 (\$bn)} & Reported & Conv. \\
+\cmidrule(lr){4-5}
+ & & (\$bn) & Reported & Holdings est. & (\% NAV) & \\
+\midrule
+\tabinput{tables/example.tex}
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\footnotesize
+\item Reported: net Item B.3.b DV100 summed over currencies and buckets, as filed. Holdings estimate:
+value change for a +100bp rise from the fund's own holdings. Illustration: a \$100m portfolio split
+equally between the iShares and Vanguard funds has a face-value DV100 of $+\$0.09$m (apparently
+hedged); with signs harmonised to convention R it is $-\$5.72$m.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Funds that are not plain (multi-asset, derivatives-heavy or multi-currency funds) cannot reveal their
+own convention, because their true exposure may be of either sign. They inherit the convention of
+their plain siblings in the same registrant, or failing that the same investment adviser, in the same
+quarter, provided at least two siblings exist and at least 90\% of them agree. Records with no plain
+sibling, with DV01 and DV100 signs that disagree within the same filing, or with unexplained unit
+problems are left unresolved rather than assigned a sign. Local-currency reporting is detected where
+the ratio of a non-USD leg to its holdings estimate matches the exchange rate (493 legs, mostly JPY)
+and converted. The full rule set was frozen before the audit was run; one labelled deviation (D1),
+made afterwards, keeps as convention R the 12,703 records whose DV100 exceeds 100 times DV01 because
+of the negative convexity of callable municipal bonds.
+
+%=====================================================================
+\section{How common is each convention?}\label{sec:prevalence}
+
+The split is not a transient or a small-sample artefact. Figure~\ref{fig:quarters} shows the share
+of plain fund-quarters reporting a positive DV100 in each of the 28 data sets: between 43\% and 50\%
+every quarter, with no trend. Over the whole sample, 25,735 of 53,603 plain fund-quarters (48\%)
+report positive.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fig2_quarters.pdf}
+  \caption{\textbf{About half of plain bond funds report a positive DV100, every quarter.} Share of plain
+  long-only bond fund-quarters reporting positive (orange) and negative (blue) net DV100, by N-PORT
+  data set. Dotted line: 50\%.}
+  \label{fig:quarters}
+\end{figure}
+
+The convention follows the fund complex. Figure~\ref{fig:complexes} plots, for the 25 registrants
+with the most plain fund-quarters, the share of their plain fund-quarters reporting positive. Almost
+every registrant sits at 0\% or 100\%. iShares, Fidelity, Northern, DoubleLine and PIMCO report
+positive; DFA, SPDR, Invesco, Franklin and Eaton Vance report negative. Across all registrant-quarters
+with at least three plain funds, 99.0\% are unanimous, and a plain fund's convention is predicted by
+the majority of its plain siblings with 99.8\% accuracy, covering 41,074 of the 51,201 evidence
+fund-quarters (80.2\%).
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.78\linewidth]{fig3_complexes.pdf}
+  \caption{\textbf{Within a fund complex, almost everyone agrees.} Share of each registrant's plain
+  fund-quarters reporting a positive DV100, for the 25 registrants with the most plain fund-quarters
+  (marker area proportional to fund-quarters).}
+  \label{fig:complexes}
+\end{figure}
+
+Table~\ref{tab:complexes} lists the largest registrants with their dominant convention and how
+consistently they apply it.
+
+\begin{table}[!htb]
+\centering\small
+\begin{threeparttable}
+\caption{Conventions of the largest registrants}\label{tab:complexes}
+\begin{tabular}{lrcrrr}
+\toprule
+Registrant & Plain fund- & Dominant & Share & Quarters & Changes \\
+ & quarters & conv. & (\%) & resolved & \\
+\midrule
+\tabinput{tables/complexes.tex}
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\footnotesize
+\item Twelve registrants with the most plain fund-quarters. Share: fraction of plain fund-quarters with
+the dominant convention. Quarters resolved: registrant-quarters classified R or F in the lookup table
+(at least two plain funds, at least 90\% agreement). Changes: switches between resolved quarters.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Conventions are stable but not permanent. Twenty-six registrants changed convention between resolved
+quarters (Table~\ref{tab:changes}), and when they change, the whole complex changes at once. Allspring
+reported positive through 2022Q4 and negative from 2023Q1; several Nuveen trusts switched to positive
+in 2022Q1 and back in 2023Q1. A user who maps each complex to a single convention will therefore be
+wrong for some quarters; the convention has to be read by quarter.
+
+\begin{table}[!htb]
+\centering\small
+\caption{Registrants that changed convention (first 14 of 31 changes, by quarter)}\label{tab:changes}
+\begin{tabular}{lccr}
+\toprule
+Registrant & Data set & Change & Plain funds \\
+\midrule
+\tabinput{tables/changes.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+What do the positive numbers mean? Fewer than 1\% of filings explain their convention in an
+explanatory note. The two complexes that do support the reading above: MassMutual describes an average
+of up and down shifts, i.e.\ a magnitude, and Ellington describes ``a 100 bp decrease''. Among F
+filers the median ratio of DV100 to 100 times DV01 is exactly 1.000, so most appear to scale DV01 up
+rather than revalue the portfolio at 100 basis points.
+
+\paragraph{How much of the data can be compared.} Figure~\ref{fig:status} shows the status of every
+fund-quarter. Across all funds, 42\% of fund-quarters are comparable as filed (convention R, US
+dollars), 40\% become comparable after a supported sign flip or unit conversion, and 18\% (13\% of
+net assets) remain unresolved. For multi-currency funds whose currency legs offset one another, the
+funds most affected by the proposal, only 20\% of net assets is comparable as filed; 65\% becomes comparable after a sign flip or unit conversion, and 14\% remains unresolved.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig4_status.pdf}
+  \caption{\textbf{How much of N-PORT DV100 is comparable as filed.} Status of each fund-quarter after
+  the audit (with deviation D1), by count and by net assets, for all 105,416 fund-quarters and for the
+  2,566 multi-currency offset fund-quarters (cross-currency offset at least 0.20, non-USD share at least
+  0.10). Unresolved records are never assigned a sign.}
+  \label{fig:status}
+\end{figure}
+
+%=====================================================================
+\section{Validation}\label{sec:validation}
+
+Because the inference for non-plain funds borrows a sibling's convention, we test it with evidence the
+inference did not use. Table~\ref{tab:validation} summarises four checks.
+
+\begin{table}[!htb]
+\centering\small
+\begin{threeparttable}
+\caption{Validation of the convention classification}\label{tab:validation}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{4.2cm}X}
+\toprule
+Check & Result \\
+\midrule
+Leave-one-out on plain funds & Sibling majority predicts 99.8\% correctly; covers 41,074 of 51,201
+evidence fund-quarters (80.2\%). \\
+Inferred conventions vs.\ each fund's own holdings (frozen protocol) & On 45,467 currency legs in 29,552
+of 35,645 inferred fund-quarters, the harmonised sign agrees with the holdings estimate on 99.7\% of
+exposure (98.3\% of legs). 6,093 inferred fund-quarters have no material leg and are unchecked;
+derivative exposure the holdings model cannot value is not tested. \\
+Separate re-implementation & An independent model run, with its own stricter definitions on the same
+SEC bulk data and no access to the audit code, finds 45.5\% positive (41 to 48\% by quarter), 99.4\%
+unanimity, leave-one-out accuracy 99.9\% at 84.0\% coverage, and the same dominant sign for each of
+the 15 largest registrants. \\
+Bulk data vs.\ original filings & For 19 filings drawn by rule, all 950 DV01/DV100 cells in the SEC
+bulk data match the original XML exactly. \\
+\bottomrule
+\end{tabularx}
+\begin{tablenotes}\footnotesize
+\item Five families fail the holdings check at family level (three multi-adviser umbrella trusts, Stone
+Ridge and Stone Harbor). Reclassifying their 68 records, and 15 records inferred through an N-CEN
+placeholder adviser identifier, as unresolved leaves every reported figure unchanged.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+%=====================================================================
+\section{Consequences for cross-fund comparison}\label{sec:consequences}
+
+The most direct consequence is for anyone who sums, nets or ranks DV100 across funds from different
+complexes. Figure~\ref{fig:pairs}(a) takes every pair of resolved fund-quarters from different
+registrants in the same quarter. As filed, 49.2\% of the 97 million pairs have net DV100s of
+opposite sign, so one fund appears to hedge the other's rate risk. After harmonising signs, 4.0\% do; these are genuine offsets, such as a fund with net short duration paired with a conventional bond fund. Under deviation D1,
+which resolves more records, the figures are 50.2\% and 3.4\% of 133 million pairs.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig5_pairs.pdf}
+  \caption{\textbf{Harmonisation changes cross-fund comparisons.} (a) Share of cross-complex pairs of
+  resolved fund-quarters whose net DV100s have opposite signs, as filed and with signs harmonised
+  (frozen audit rule; unweighted; units not converted). (b) Share of 23,566 cross-family pairs of
+  multi-currency funds whose diversification class (offsetting: predicted rate-P\&L correlation
+  $<-0.3$; similar: $>+0.3$; otherwise neutral; 60-month yield covariance) changes between raw and
+  harmonised data, and between the proposal's currency aggregate and full per-currency detail.
+  Model-based classifications; neither change is validated by realised returns.}
+  \label{fig:pairs}
+\end{figure}
+
+For multi-currency funds, a finer question is whether two funds' rate exposures are offsetting,
+neutral or similar. Classifying 23,566 cross-family pairs by their predicted rate-P\&L correlation,
+harmonising signs and units changes the class of 48.9\% of pairs; moving from the proposal's
+currency aggregate to full per-currency detail changes 18.9\% (Figure~\ref{fig:pairs}(b)). These are
+model-based classifications. Where the aggregate and the detail predict opposite-signed
+correlations, realised residual correlations sided with the detail 186 times and with the aggregate
+180 times, so the pair-level classification is not validated by returns. We have no evidence about
+actual investor decisions or losses.
+
+%=====================================================================
+\section{Evidence from returns}\label{sec:returns}
+
+Do the differences matter for explaining what funds subsequently earn? We answer this as secondary
+evidence, with a design pre-registered before any return was read and amended twice, with dated
+amendments, before outcomes were examined. We compare identically cleaned information sets: A
+(holdings and derivatives only); B (A plus the proposal-equivalent aggregate DV100, used with each
+holding's currency as the SEC describes); C (A plus harmonised per-currency DV100); and
+$\mathrm{B}_{\mathrm{raw}}$ and $\mathrm{C}_{\mathrm{raw}}$ (B and C as filed). Each record is used
+only from the month after its filing date. Rate P\&L is priced at realised monthly yield changes,
+and the remaining return is explained by a fund-specific rolling 36-month factor model refitted for
+each set. The outcome is the error of this \emph{conditional} prediction; it is not a forecast and not
+a tradable signal. Confidence intervals are the more conservative of a calendar-month and a
+fund-family cluster bootstrap \citep{cameron2008}. Development and confirmation samples are split by
+fund family, and funds inspected earlier are excluded from confirmation.
+
+\begin{table}[!htb]
+\centering\small
+\begin{threeparttable}
+\caption{Return evidence (confirmation sample)}\label{tab:returns}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{3.9cm}}
+\toprule
+ & \textbf{Primary, pre-registered} (153 funds, 2,117 fund-months) & \textbf{Broad, secondary} (343
+ funds, 10,988 fund-months) \\
+\midrule
+Frozen calibration test $\theta$ (passes at $\geq 0.5$) & \textbf{0.496 [0.135, 0.992]: inconclusive} &
+0.72 [0.41, 1.02] \\
+Per-currency detail: MSE reduction, C vs.\ B & 6.7\% [$-1.3$, 32.4] & 0.9\% [0.25, 1.5] \\
+Signs and units harmonised: MSE reduction, B vs.\ $\mathrm{B}_{\mathrm{raw}}$ (descriptive) &
+10.0\% [$-1.2$, 13.8]$^\dagger$ & 9.7\% [4.7, 13.7]$^\dagger$ \\
+\bottomrule
+\end{tabularx}
+\begin{tablenotes}\footnotesize
+\item 95\% intervals in brackets: the more conservative of month and family bootstraps. MSE: conditional
+prediction error of monthly fund returns. Primary population: multi-currency offset funds; broad
+population: funds with at least 10\% non-USD debt. $\theta$: slope of B's prediction error on the
+difference between C's and B's rate P\&L.
+\item[$\dagger$] Interval computed after the frozen run. Sign and unit effects are not separated.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Table~\ref{tab:returns} reports the results. The pre-registered primary test, in the population the
+proposal most affects, is inconclusive: $\theta$ falls 0.004 short of its threshold, and one
+managed-futures fund supplies 89\% of its signal (its holdings estimate swings by $\pm$20\% of net
+assets a month, and its reported per-currency legs correct it). Without that fund, a post-hoc
+calculation, per-currency detail improves prediction error by 0.8\% [$-2.2$, 2.2]. In the broader
+secondary population, harmonising signs and units lowers prediction error by 9.7\%, and adding
+per-currency detail by 0.9\% (Figure~\ref{fig:returns}); the currency-detail gain is absent in
+2025 and 2026. The two are not like-for-like: a user can repair the sign convention from public
+information for most records, whereas currency detail removed by aggregation cannot be recovered.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig6_returns.pdf}
+  \caption{\textbf{Secondary analysis: harmonisation vs.\ currency detail.} Reduction in the conditional
+  prediction error (MSE) of monthly fund returns, broad population (10,988 fund-months, 343 funds with
+  at least 10\% non-USD debt, confirmation sample), with 95\% intervals. $^\dagger$Interval computed
+  after the frozen run; sign and unit effects are not separated. The pre-registered primary test was
+  inconclusive (Table~\ref{tab:returns}).}
+  \label{fig:returns}
+\end{figure}
+
+%=====================================================================
+\section{Implications}\label{sec:implications}
+
+\paragraph{For users of N-PORT data.} Risk teams, allocators and data vendors should not sum, net or
+rank DV100 across fund complexes without establishing each complex's convention for that quarter. The
+lookup tables built by the accompanying code resolve 76.9\% of fund-quarters, trying the registrant first and then the
+adviser; the remainder should be treated as unknown. An F label describes how a complex reported, not
+an instruction to flip every number: it combines fall-direction and magnitude reporting, which cannot
+be distinguished from the numbers alone.
+
+\paragraph{For the form.} One sentence would remove the ambiguity, for example: ``report the change in
+value for a parallel 100 basis point increase in interest rates; a decrease in value is reported as a
+negative number.'' The proposed USD requirement fixes units, not direction.
+
+\paragraph{For the proposed currency aggregation.} This paper does not show that aggregation harms
+risk assessment on average. The cost appears concentrated in a few derivatives-heavy funds, and that
+conclusion rests on post-hoc evidence from one fund.
+
+\paragraph{Limitations.} DV100 is treated as linear and parallel by bucket; flipping F records ignores
+convexity asymmetry (about 1 to 5\% for plain bond funds), and magnitude-style figures are assumed to
+have the economic sign of a rise. Positions are 1 to 9 months stale. Rates are mapped for six
+currencies; the rest are priced on each fund's currency mix. Factor returns exclude ETF distributions.
+The analysis covers public quarterly N-PORT reports only, says nothing about the proposed threshold
+change, the IG/non-IG merge or the removal of DV01, and does not measure investor behaviour or losses.
+
+%=====================================================================
+\section{Conclusion}
+
+A single number in a mandatory SEC filing means opposite things depending on who files it. About half
+of plain bond funds report the interest-rate sensitivity of their portfolios as positive and half as
+negative, and the choice is made consistently at the level of the fund complex. Taken at face value,
+these figures make about half of all cross-complex fund pairs look like rate hedges for one another.
+The problem is easy to fix for future filings with one sentence in the form instructions, and for
+past filings with the lookup tables that the accompanying code builds.
+
+\section*{Data and code availability}
+All inputs are public. Form N-PORT and Form N-CEN data sets are available from the SEC; yield curves and
+exchange rates from the official sources listed in the references. The code for the audit, the lookup
+tables, the outcome study, the separate re-implementation and this paper's figures and tables is
+available at \url{https://github.com/HRishabh95/nport-dv100-sign-conventions}, and regenerates every
+reported number from those public sources. Protocol hashes: audit 7c51d52c, outcome fe1c473e,
+amendment~1 e6a248e8, amendment~2 8ae3f579, sign check 29cbe65b. Labelled deviations: D1
+(Section~\ref{sec:method}); an exclusion-matching bug fixed after the development run (development
+numbers unchanged); post-hoc intervals for the harmonisation comparison; post-hoc leave-one-fund-out
+figures.
+
+\section*{Use of generative AI}
+Anthropic's Claude Opus 5.5 models were used to develop the analysis code; extract and analyse the
+public SEC data; and generate the figures. The author selected the research question, approved the
+research protocols and their amendments, reviewed the evidence and conclusions, directed revisions,
+and accepts responsibility for the final manuscript.
+
+\begin{thebibliography}{99}\small\setlength{\itemsep}{2pt}
+\bibitem[{Barth et al.}(2024)]{barth2024} Barth, D., R.\,J. Kahn, P. Monin, and O. Sokolinskiy (2024). Reaching for Duration and Leverage in the Treasury Market. Finance and Economics Discussion Series 2024-039, Board of Governors of the Federal Reserve System. \doi{10.17016/FEDS.2024.039}
+\bibitem[{Becker and Ivashina}(2015)]{becker2015} Becker, B., and V. Ivashina (2015). Reaching for Yield in the Bond Market. \emph{Journal of Finance} 70(5), 1863-1902. \doi{10.1111/jofi.12199}
+\bibitem[{Cameron et al.}(2008)]{cameron2008} Cameron, A.\,C., J.\,B. Gelbach, and D.\,L. Miller (2008). Bootstrap-Based Improvements for Inference with Clustered Errors. \emph{Review of Economics and Statistics} 90(3), 414-427. \doi{10.1162/rest.90.3.414}
+\bibitem[{Choi and Kronlund}(2018)]{choi2018} Choi, J., and M. Kronlund (2018). Reaching for Yield in Corporate Bond Mutual Funds. \emph{Review of Financial Studies} 31(5), 1930-1965. \doi{10.1093/rfs/hhx132}
+\bibitem[{Chong and Hendry}(1986)]{chong1986} Chong, Y.\,Y., and D.\,F. Hendry (1986). Econometric Evaluation of Linear Macro-Economic Models. \emph{Review of Economic Studies} 53(4), 671-690. \doi{10.2307/2297611}
+\bibitem[{Debreceny et al.}(2010)]{debreceny2010} Debreceny, R., S. Farewell, M. Piechocki, C. Felden, and A. Gr\"aning (2010). Does It Add Up? Early Evidence on the Data Quality of XBRL Filings to the SEC. \emph{Journal of Accounting and Public Policy} 29(3), 296-306. \doi{10.1016/j.jaccpubpol.2010.04.001}
+\bibitem[{Du et al.}(2013)]{du2013} Du, H., M.\,A. Vasarhelyi, and X. Zheng (2013). XBRL Mandate: Thousands of Filing Errors and So What? \emph{Journal of Information Systems} 27(1), 61-78. \doi{10.2308/isys-50399}
+\bibitem[{Elton et al.}(2001)]{elton2001} Elton, E.\,J., M.\,J. Gruber, and C.\,R. Blake (2001). A First Look at the Accuracy of the CRSP Mutual Fund Database and a Comparison of the CRSP and Morningstar Mutual Fund Databases. \emph{Journal of Finance} 56(6), 2415-2430. \doi{10.1111/0022-1082.00410}
+\bibitem[{Falato et al.}(2021)]{falato2021} Falato, A., I. Goldstein, and A. Hortaçsu (2021). Financial Fragility in the COVID-19 Crisis: The Case of Investment Funds in Corporate Bond Markets. \emph{Journal of Monetary Economics} 123, 35-52. \doi{10.1016/j.jmoneco.2021.07.001}
+\bibitem[{Flood et al.}(2015)]{flood2015} Flood, M.\,D., P. Monin, and L. Bandyopadhyay (2015). Gauging Form PF: Data Tolerances in Regulatory Reporting on Hedge Fund Risk Exposures. OFR Working Paper 15-13, Office of Financial Research. \url{https://www.financialresearch.gov/working-papers/2015/07/30/gauging-form-pf/}
+\bibitem[{Goldstein et al.}(2017)]{goldstein2017} Goldstein, I., H. Jiang, and D.\,T. Ng (2017). Investor Flows and Fragility in Corporate Bond Funds. \emph{Journal of Financial Economics} 126(3), 592-613. \doi{10.1016/j.jfineco.2016.11.007}
+\bibitem[{Harvey}(2017)]{harvey2017} Harvey, C.\,R. (2017). Presidential Address: The Scientific Outlook in Financial Economics. \emph{Journal of Finance} 72(4), 1399-1440. \doi{10.1111/jofi.12530}
+\bibitem[{Harvey et al.}(1998)]{harvey1998} Harvey, D.\,I., S.\,J. Leybourne, and P. Newbold (1998). Tests for Forecast Encompassing. \emph{Journal of Business \& Economic Statistics} 16(2), 254-259. \doi{10.1080/07350015.1998.10524759}
+\bibitem[{Ho}(1992)]{ho1992} Ho, T.\,S.\,Y. (1992). Key Rate Durations: Measures of Interest Rate Risks. \emph{Journal of Fixed Income} 2(2), 29-44. \doi{10.3905/jfi.1992.408049}
+\bibitem[{Investment Company Institute}(2026)]{ici_letter} Investment Company Institute (2026).
+Comment letter on File No.\ S7-2026-05, 24 April 2026.
+\url{https://www.sec.gov/comments/S7-2026-05/s7202605-759947-2336774.pdf}
+\bibitem[{Iorio et al.}(2024)]{iorio2024} Iorio, B., D. Li, and L. Petrasek (2024). Why Do Mutual Funds Invest in Treasury Futures? FEDS Notes, Board of Governors of the Federal Reserve System, 10 May 2024. \doi{10.17016/2380-7172.3488}
+\bibitem[{Kaniel and Wang}(2025)]{kaniel2025} Kaniel, R., and P. Wang (2025). Unmasking Mutual Fund Derivative Use. \emph{Review of Financial Studies} 38(4), 1120-1166. \doi{10.1093/rfs/hhaf001}
+\bibitem[{Koski and Pontiff}(1999)]{koski1999} Koski, J.\,L., and J. Pontiff (1999). How Are Derivatives Used? Evidence from the Mutual Fund Industry. \emph{Journal of Finance} 54(2), 791-816. \doi{10.1111/0022-1082.00126}
+\bibitem[{Ma et al.}(2022)]{ma2022} Ma, Y., K. Xiao, and Y. Zeng (2022). Mutual Fund Liquidity Transformation and Reverse Flight to Liquidity. \emph{Review of Financial Studies} 35(10), 4674-4711. \doi{10.1093/rfs/hhac007}
+\bibitem[{Sharma}(2026)]{sharma_letter} Sharma, R. (2026). Comment letter on File No.\ S7-2026-05,
+15 March 2026. \url{https://www.sec.gov/comments/s7-2026-05/s7202605-724347-2266094.pdf}
+\bibitem[{Tuckman and Serrat}(2022)]{tuckman2022} Tuckman, B., and A. Serrat (2022). \emph{Fixed Income Securities: Tools for Today's Markets}, 4th ed. Hoboken, NJ: Wiley. \doi{10.1002/9781119835622}
+\bibitem[{SEC}(2016)]{sec_2016} U.S. Securities and Exchange Commission (2016). Investment Company
+Reporting Modernization. Release No.\ 33-10231.
+\url{https://www.sec.gov/files/rules/final/2016/33-10231.pdf}
+\bibitem[{SEC}(2026a)]{sec_proposal} U.S. Securities and Exchange Commission (2026a). Form N-PORT
+Reporting. Proposed rule, Release No.\ IC-35962, File No.\ S7-2026-05.
+\url{https://www.sec.gov/files/rules/proposed/2026/ic-35962.pdf}
+\bibitem[{SEC}(2026b)]{sec_comments} U.S. Securities and Exchange Commission (2026b). Public comments
+on File No.\ S7-2026-05. \url{https://www.sec.gov/rules-regulations/public-comments/s7-2026-05}
+\bibitem[{SEC}(n.d.a)]{sec_nport} U.S. Securities and Exchange Commission (n.d.a). Form N-PORT:
+Monthly Portfolio Investments Report (form and instructions). \url{https://www.sec.gov/files/formn-port.pdf}
+\bibitem[{SEC}(n.d.b)]{sec_nportdata} U.S. Securities and Exchange Commission (n.d.b). Form N-PORT
+Data Sets, 2019Q4 to 2026Q3. \url{https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets}
+\bibitem[{SEC}(n.d.c)]{sec_ncen} U.S. Securities and Exchange Commission (n.d.c). Form N-CEN Data
+Sets. \url{https://www.sec.gov/data-research/sec-markets-data/form-n-cen-data-sets}
+\bibitem[{Rate sources}(n.d.)]{rates} Yield and exchange-rate sources: U.S. Treasury, Daily Treasury Par
+Yield Curve Rates; European Central Bank Data Portal, euro area AAA spot curve (series YC) and euro
+foreign exchange reference rates (series EXR); Bank of England, nominal government spot curve; Japan
+Ministry of Finance, JGB interest rates; Bank of Canada, Valet API; Reserve Bank of Australia,
+statistical tables F1 and F2.
+\end{thebibliography}
+
+\end{document}

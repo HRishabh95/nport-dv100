@@ -1,0 +1,10 @@
+data/
+__pycache__/
+*.pyc
+*.parquet
+reports/nport_dv100/data/*.csv
+reports/nport_dv100/paper/figs/
+reports/nport_dv100/paper/tables/
+reports/nport_dv100/paper/*.pdf
+*.png
+.DS_Store

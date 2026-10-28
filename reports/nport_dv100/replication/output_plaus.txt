@@ -1,0 +1,60 @@
+all fund-quarters with IRR rows 111898
+NAV<=0 14 NAV<=1e6 557 DV100==0 6482 |DV100|>=NAV 121
+base 104936 plain(holdings) 41519 plain+plausible 39810
+ratio quantiles (plain holdings): [0.37, 0.65, 0.77, 0.93, 1.05]
+MODE plaus n 39810 funds 2739 registrants 784
+overall share positive 0.455
+mixed-sign buckets share 0.124
+            n    pos
+QUARTER             
+2019q4    893  0.450
+2020q1   1301  0.411
+2020q2   1356  0.428
+2020q3   1392  0.435
+2020q4   1432  0.455
+2021q1   1367  0.447
+2021q2   1375  0.447
+2021q3   1392  0.445
+2021q4   1378  0.441
+2022q1   1381  0.481
+2022q2   1408  0.477
+2022q3   1411  0.475
+2022q4   1426  0.469
+2023q1   1438  0.441
+2023q2   1424  0.438
+2023q3   1417  0.445
+2023q4   1431  0.454
+2024q1   1416  0.443
+2024q2   1494  0.481
+2024q3   1421  0.450
+2024q4   1475  0.464
+2025q1   1496  0.474
+2025q2   1539  0.463
+2025q3   1528  0.469
+2025q4   1524  0.453
+2026q1   1534  0.472
+2026q2   1575  0.468
+2026q3   1586  0.459
+min 0.411 max 0.481
+reg-quarters >=3 plain 4116 unanimous 0.994 covering funds 28805 unanimous pos 1716 neg 2376
+LOO (>=1 peer, no tie): coverage 0.840 accuracy 0.999 n=33434
+LOO (>=2 peers, no tie): coverage 0.723 accuracy 0.999 n=28790
+naive majority-sign accuracy on LOO-covered 0.542
+funds >=4 qtrs: always same sign 0.915 (n=2130)
+                                                    name     n  nq dominant  share
+CIK                                                                               
+1100663                                    iShares Trust  2350  28        +  1.000
+35315                        Fidelity Salem Street Trust   757  28        +  1.000
+1657201  Invesco Exchange-Traded Self-Indexed Fund Trust   754  27        -  1.000
+1064642                                SPDR SERIES TRUST   663  28        -  1.000
+355437               DFA INVESTMENT DIMENSIONS GROUP INC   621  28        -  1.000
+757010                           Franklin Tax Free Trust   563  27        -  1.000
+778365                      Eaton Vance Municipals Trust   497  28        -  1.000
+916620                                    Northern Funds   477  28        +  1.000
+751656                        MFS Municipal Series Trust   421  28        -  1.000
+1081400                            ALLSPRING FUNDS TRUST   420  28        -  0.526
+909466   AIM Tax-Exempt Funds (Invesco Tax-Exempt Funds)   385  28        -  1.000
+810893                                       PIMCO FUNDS   376  28        +  0.976
+1137360                                 VanEck ETF Trust   376  28        -  0.968
+1084380                                  TIAA-CREF Funds   360  28        -  1.000
+764624                  Legg Mason Partners Income Trust   355  28        +  1.000
